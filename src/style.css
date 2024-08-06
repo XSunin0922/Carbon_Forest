@@ -1,0 +1,85 @@
+html,
+body {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+.btn {
+    position: absolute;
+    z-index: 1;
+    color: white;
+    background-color: #111;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    width: 120px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 0 50px #1cd6ce, 0 0 100px #002f5f;
+    transition: box-shadow 1s ease-in-out;
+}
+
+.btn:hover {
+    color: #1cd6ce;
+    background-color: #002f5f;
+}
+
+#layerManage {
+    left: 10px;
+}
+
+#tableControl {
+    left: 140px;
+}
+
+#flyToCSJ {
+    left: 140px;
+    bottom: 45px;
+}
+
+#flyToZSJ {
+    left: 10px;
+    bottom: 45px;
+}
+
+#layerControl {
+    position: absolute;
+    padding: 20px;
+    z-index: 1;
+    color: #1c0249;
+    background: linear-gradient(45deg, #1cd6ce, #002f5f);
+    background-size: 400% 400%;
+    border-radius: 10px;
+    width: 250px;
+    height: 500px;
+    left: 10px;
+    top: 50px;
+    font-size: 30px;
+    font-family: "Microsoft YaHei";
+    animation: glowing 4s linear infinite;
+}
+
+@keyframes glowing {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.checkText {
+    position: relative;
+    left: 20px;
+}
+
+.checkBox {
+    position: relative;
+    left: 40px;
+}
+

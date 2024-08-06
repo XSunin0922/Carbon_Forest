@@ -1,0 +1,8 @@
+id,Name,C_above,C_below,C_soil,C_dead
+1,farmland,5,2,20,1
+2,forest,156,103,111,46
+3,grass,4,4,13,1
+4,shrub,8,5,25,2
+5,wet,10,5,20,0
+6,urban,20,6,35,4
+7,Vacant,10,20,10,5
