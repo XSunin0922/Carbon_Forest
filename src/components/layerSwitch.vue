@@ -1,9 +1,9 @@
 <script setup>
 import * as Cesium from 'cesium';
 import * as echarts from 'echarts';
-import * as ol from 'ol';
 import Heatmap from 'heatmap.js';
 import {onMounted, ref, watch} from "vue";
+import olHeatMap from './olHeatMap.vue';
 import option from "../utils/echarts_option.js";
 
 const props = defineProps(['viewer']);
@@ -148,7 +148,8 @@ function heatMapSet(heatMap) {
         blur: 0.85
       });
       heatmapInstance.setData({
-        data: point
+        data: point,
+        max: 13
       });
       heatmapInstance._renderer.canvas = heatMapCanvas.value;
       heatmapInstance.repaint();
@@ -209,8 +210,9 @@ watch(echartsManage, () => {
   <button class="btn" id="tableControl" @click="echartsManage=!echartsManage">Carbon Pool</button>
   <div id="echartsTable" ref="echartsTableContainer" v-show="echartsManage"></div>
   <div class="heatMap" ref="heatMapContainer">
-    <canvas class="heatMap" ref="heatMapCanvas"></canvas>
+    <canvas class="heatMap" ref="heatMapCanvas" style="width: 100%; height: 100%"></canvas>
   </div>
+  <olHeatMap></olHeatMap>
 </template>
 
 <style scoped>
@@ -228,7 +230,7 @@ watch(echartsManage, () => {
 
 .heatMap {
   position: absolute;
-  width: 50%;
-  height: 50%;
+  width: 100%;
+  height: 100%;
 }
 </style>
