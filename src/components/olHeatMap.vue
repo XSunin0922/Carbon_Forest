@@ -5,7 +5,7 @@ import VectorSource from "ol/source/Vector";
 import VectorLayer from "ol/layer/Vector";
 import HeatmapLayer from 'ol/layer/Heatmap';
 import {GeoJSON} from "ol/format";
-import {toPng} from 'html-to-image'
+import {toPng} from 'html-to-image';
 
 const blur = ref(100);
 const radius = ref(20);
@@ -77,5 +77,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
+#olMap {
+  width: 100%;
+  position: absolute;
+  padding: 0;
+  margin: 0;
+}
 </style>

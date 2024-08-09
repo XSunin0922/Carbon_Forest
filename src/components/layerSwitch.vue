@@ -167,6 +167,25 @@ function heatMapSet(heatMap) {
   }
 }
 
+function updateHeatmapLayer() {
+  const heatmapImage = localStorage.getItem('heatmapImage');
+  if (heatmapImage) {
+    if (heatMap.value.lay) {
+      props.viewer.imageryLayers.remove(heatMap.value.lay);
+    }
+    heatMap.value.lay = props.viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({
+      url: heatmapImage,
+      rectangle: new Cesium.Rectangle(Cesium.Math.toRadians(111.3), Cesium.Math.toRadians(21.5), Cesium.Math.toRadians(115.5), Cesium.Math.toRadians(24.4))
+    }));
+  }
+}
+
+window.addEventListener("storage", (event) => {
+  if (event.key === "heatmapImage") {
+    updateHeatmapLayer();
+  }
+});
+
 watch(WMTSLayers, (newLayers) => {
   newLayers.forEach(layer => {
     WMTSLayerToggle(layer);
@@ -177,6 +196,7 @@ watch(() => heatMap.value.on, () => {
   if (heatMap.value.on) {
     if (!heatMap.value.point && !heatMap.value.lay) {
       heatMapSet(heatMap);
+      updateHeatmapLayer();
     }
   } else {
     if (heatMap.value.point && heatMap.value.lay) {
