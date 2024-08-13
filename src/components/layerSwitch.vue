@@ -1,7 +1,6 @@
 <script setup>
 import * as Cesium from 'cesium';
 import * as echarts from 'echarts';
-import Heatmap from 'heatmap.js';
 import {onMounted, ref, watch} from "vue";
 import olHeatMap from './olHeatMap.vue';
 import option from "../utils/echarts_option.js";
@@ -23,9 +22,9 @@ let WMTSLayers = ref([
 ]);
 let heatMap = ref({id: 'heatMap', point: null, lay: null, on: false});
 
-function tableInitial() {
-  const myChart = echarts.init(echartsTableContainer.value);
-  option && myChart.setOption(option);
+async function tableInitial() {
+    const myChart = echarts.init(echartsTableContainer.value);
+    option && myChart.setOption(option);
 }
 
 function WMTSlayerSet(layer) {
@@ -232,7 +231,7 @@ watch(echartsManage, () => {
   <div class="heatMap" ref="heatMapContainer">
     <canvas class="heatMap" ref="heatMapCanvas" style="width: 100%; height: 100%"></canvas>
   </div>
-  <olHeatMap></olHeatMap>
+<!--  <olHeatMap></olHeatMap>-->
 </template>
 
 <style scoped>

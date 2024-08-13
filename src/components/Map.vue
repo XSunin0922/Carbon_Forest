@@ -41,8 +41,8 @@ onMounted(() => {
 <template>
   <div id="mapContainer">
     <layerSwitch :viewer="viewer"></layerSwitch>
+    <viewSwitch :viewer="viewer"></viewSwitch>
   </div>
-  <viewSwitch :viewer="viewer"></viewSwitch>
 </template>
 
 <style scoped>

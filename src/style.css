@@ -36,12 +36,12 @@ body {
 
 #flyToCSJ {
     left: 140px;
-    bottom: 45px;
+    bottom: 5px;
 }
 
 #flyToZSJ {
     left: 10px;
-    bottom: 45px;
+    bottom: 5px;
 }
 
 #layerControl {
