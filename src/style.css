@@ -26,22 +26,8 @@ body {
     background-color: #002f5f;
 }
 
-#layerManage {
-    left: 10px;
-}
-
 #tableControl {
     left: 140px;
-}
-
-#flyToCSJ {
-    left: 140px;
-    bottom: 5px;
-}
-
-#flyToZSJ {
-    left: 10px;
-    bottom: 5px;
 }
 
 #layerControl {

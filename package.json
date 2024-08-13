@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "echarts": "^5.5.1",
-    "html-to-image": "^1.11.11",
     "ol": "^10.0.0",
-    "vue": "^3.4.31"
+    "vue": "^3.4.31",
+    "vue-router": "4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",

@@ -252,4 +252,8 @@ watch(echartsManage, () => {
   width: 100%;
   height: 100%;
 }
+
+#layerManage {
+  left: 10px;
+}
 </style>

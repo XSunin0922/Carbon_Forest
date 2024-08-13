@@ -9,6 +9,7 @@ function flyToZSJ() {
     duration: 2
   });
 }
+
 function flyToCSJ() {
   props.viewer.camera.flyTo({
     destination: new Cesium.Cartesian3.fromDegrees(117, 31, 1000000),
@@ -18,12 +19,20 @@ function flyToCSJ() {
 </script>
 
 <template>
-<div class="ctrlBar" id="flyTo">
-  <button class="btn" id="flyToZSJ" @click="flyToZSJ">flyToZSJ</button>
-  <button class="btn" id="flyToCSJ" @click="flyToCSJ">flyToCSJ</button>
-</div>
+  <div class="ctrlBar" id="flyTo">
+    <button class="btn" id="flyToZSJ" @click="flyToZSJ">flyToZSJ</button>
+    <button class="btn" id="flyToCSJ" @click="flyToCSJ">flyToCSJ</button>
+  </div>
 </template>
 
 <style scoped>
+#flyToCSJ {
+  left: 140px;
+  bottom: 5px;
+}
 
+#flyToZSJ {
+  left: 10px;
+  bottom: 5px;
+}
 </style>
