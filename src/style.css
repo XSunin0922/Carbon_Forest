@@ -38,13 +38,14 @@ body {
     background: linear-gradient(45deg, #1cd6ce, #002f5f);
     background-size: 400% 400%;
     border-radius: 10px;
-    width: 250px;
-    height: 500px;
+    width: 220px;
+    height: 400px;
     left: 10px;
     top: 50px;
-    font-size: 30px;
+    font-size: 25px;
     font-family: "Microsoft YaHei";
     animation: glowing 4s linear infinite;
+    opacity: 0.9;
 }
 
 @keyframes glowing {
@@ -58,14 +59,3 @@ body {
         background-position: 0% 50%;
     }
 }
-
-.checkText {
-    position: relative;
-    left: 20px;
-}
-
-.checkBox {
-    position: relative;
-    left: 40px;
-}
-

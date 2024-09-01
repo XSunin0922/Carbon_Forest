@@ -2,34 +2,33 @@
 import * as Cesium from 'cesium';
 import * as echarts from 'echarts';
 import {onMounted, ref, watch} from "vue";
-import olHeatMap from './olHeatMap.vue';
 import option from "../utils/echarts_option.js";
+import {SortDown, SortUp} from "@element-plus/icons-vue";
+import {ElLoading} from "element-plus";
 
 const props = defineProps(['viewer']);
-const heatMapContainer = ref(null);
-const heatMapCanvas = ref(null);
 const echartsTableContainer = ref(null);
+const src = ref('');
 const echartsManage = ref(false);
 const layerManage = ref(false);
 let WMTSLayers = ref([
-  {id: 'zsj_lulc_10', obj: null, lay: null, on: false},
-  {id: 'zsj_lulc_20', obj: null, lay: null, on: false},
-  {id: 'tot_c_cur', obj: null, lay: null, on: false},
-  {id: 'tot_c_fut', obj: null, lay: null, on: false},
-  {id: 'delta_cur_fut', obj: null, lay: null, on: false},
-  {id: 'c_above_cur', obj: null, lay: null, on: false},
-  {id: 'c_above_fut', obj: null, lay: null, on: false}
+  {id: 'zsj_lulc_10', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '10年土地利用'},
+  {id: 'zsj_lulc_20', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年土地利用'},
+  {id: 'tot_c_cur', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年总碳库'},
+  {id: 'tot_c_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '30年总碳库（预测）'},
+  {id: 'delta_cur_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20-30年间碳库变化'},
+  {id: 'c_above_cur', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年地上碳库'},
+  {id: 'c_above_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '30年地上碳库（预测）'},
 ]);
-let heatMap = ref({id: 'heatMap', point: null, lay: null, on: false});
+let heatMap = ref({id: 'heatPoint', point: null, on: false});
 
 async function tableInitial() {
-    const myChart = echarts.init(echartsTableContainer.value);
-    option && myChart.setOption(option);
+  const myChart = echarts.init(echartsTableContainer.value);
+  option && myChart.setOption(option);
 }
 
 function WMTSlayerSet(layer) {
   if (props.viewer && props.viewer.imageryLayers) {
-    // imageryProvider
     layer.obj = new Cesium.WebMapTileServiceImageryProvider({
       url: `/geoserver/gwc/service/wmts/rest/carbon:${layer.id}/{style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}?format=image/png`,
       layer: `carbon:${layer.id}`,
@@ -40,8 +39,15 @@ function WMTSlayerSet(layer) {
       tilingScheme: new Cesium.GeographicTilingScheme(),
       rectangle: new Cesium.Rectangle(Cesium.Math.toRadians(111.3), Cesium.Math.toRadians(21.5), Cesium.Math.toRadians(115.5), Cesium.Math.toRadians(24.4))
     });
-    // imageryLayer
     layer.lay = props.viewer.imageryLayers.addImageryProvider(layer.obj);
+    layer.lay.alpha = layer.alpha;
+    layer.fcUp = function () {
+      return UpDown('Up', layer.lay);
+    };
+    layer.fcDown = function () {
+      return UpDown('Down', layer.lay);
+    };
+    src.value = `/geoserver/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=carbon%3A${layer.id}`;
   }
 }
 
@@ -76,8 +82,21 @@ function WMTSLayerToggle(layer) {
     } else {
       if (layer.obj !== null) {
         props.viewer.imageryLayers.remove(layer.lay, true);
+        // debug
+        layer.lay = null;
         layer.obj = null;
+        src.value = '';
       }
+    }
+  }
+}
+
+function UpDown(type, lay) {
+  if (props.viewer && props.viewer.imageryLayers && lay) {
+    if (type === 'Up') {
+      props.viewer.imageryLayers.raise(lay);
+    } else if (type === 'Down') {
+      props.viewer.imageryLayers.lower(lay);
     }
   }
 }
@@ -95,12 +114,12 @@ function getColorForHeight(height) {
 }
 
 function heatMapSet(heatMap) {
-  if (props.viewer.dataSources && props.viewer.imageryLayers) {
+  if (props.viewer.dataSources) {
     const time = Cesium.JulianDate.now();
     Cesium.GeoJsonDataSource.load('/geoserver/carbon/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=carbon%3Azsj_above&maxFeatures=50&outputFormat=application%2Fjson', {
-      stroke: Cesium.Color.BLACK,
-      strokeWidth: 2,
-      fill: Cesium.Color.PINK.withAlpha(0.5)
+      // stroke: Cesium.Color.BLACK,
+      // strokeWidth: 2,
+      // fill: Cesium.Color.PINK.withAlpha(0.5)
     }).then((dataSource) => {
       // props.viewer.dataSources.add(dataSource);
       heatMap.value.point = dataSource.entities.values;
@@ -136,54 +155,24 @@ function heatMapSet(heatMap) {
           value: value
         };
       });
-    }).catch((error)=>{
+    }).catch((error) => {
       console.error(error);
-    }).then((point) => {
-      const heatmapInstance = Heatmap.create({
-        container: heatMapContainer.value,
-        radius: 20,
-        maxOpacity: 0.8,
-        minOpacity: 0.1,
-        blur: 0.85
-      });
-      heatmapInstance.setData({
-        data: point,
-        max: 13
-      });
-      heatmapInstance._renderer.canvas = heatMapCanvas.value;
-      heatmapInstance.repaint();
-      const dataUrl = heatMapCanvas.value.toDataURL('image/png');
-      const heatmapTexture = new Cesium.SingleTileImageryProvider({
-        url: dataUrl,
-        tileHeight: 100,
-        tileWidth: 100
-      });
-      heatMap.value.lay = props.viewer.imageryLayers.addImageryProvider(heatmapTexture);
-    }).catch(error => {
-      console.error(error);
-      heatMap.value.on = false;
     })
   }
 }
 
-function updateHeatmapLayer() {
-  const heatmapImage = localStorage.getItem('heatmapImage');
-  if (heatmapImage) {
-    if (heatMap.value.lay) {
-      props.viewer.imageryLayers.remove(heatMap.value.lay);
-    }
-    heatMap.value.lay = props.viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({
-      url: heatmapImage,
-      rectangle: new Cesium.Rectangle(Cesium.Math.toRadians(111.3), Cesium.Math.toRadians(21.5), Cesium.Math.toRadians(115.5), Cesium.Math.toRadians(24.4))
-    }));
+function handleLayerClick(layer) {
+  layer.on = !layer.on;
+  if (layer.on) {
+    const loading = ElLoading.service({
+      text: 'Map Loading...',
+      background: 'rgba(0, 0, 0, 0.4)'
+    });
+    setTimeout(() => {
+      loading.close();
+    }, 1000)
   }
 }
-
-window.addEventListener("storage", (event) => {
-  if (event.key === "heatmapImage") {
-    updateHeatmapLayer();
-  }
-});
 
 watch(WMTSLayers, (newLayers) => {
   newLayers.forEach(layer => {
@@ -193,21 +182,18 @@ watch(WMTSLayers, (newLayers) => {
 
 watch(() => heatMap.value.on, () => {
   if (heatMap.value.on) {
-    if (!heatMap.value.point && !heatMap.value.lay) {
+    if (!heatMap.value.point) {
       heatMapSet(heatMap);
-      updateHeatmapLayer();
     }
   } else {
-    if (heatMap.value.point && heatMap.value.lay) {
+    if (heatMap.value.point) {
       props.viewer.entities.removeAll();
-      props.viewer.imageryLayers.remove(heatMap.value.lay, true);
       heatMap.value.point = null;
-      heatMap.value.lay = null;
     }
   }
 }, {flush: 'post'});
 
-watch(echartsManage, () => {
+onMounted(() => {
   tableInitial();
 })
 
@@ -218,20 +204,25 @@ watch(echartsManage, () => {
   <div id="layerControl" v-show="layerManage">
     <h3>Layer Control</h3>
     <div class="layerItem" v-for="layer in WMTSLayers" :key="layer.id">
-      <label :for="layer.id" class="checkText">{{ layer.id }}</label>
-      <input type="checkbox" class="checkBox" @click="layer.on=!layer.on"/>
+      <el-icon size="20" @click="layer.fcDown">
+        <SortDown/>
+      </el-icon>
+      <el-icon size="20" @click="layer.fcUp">
+        <SortUp/>
+      </el-icon>
+      <input type="checkbox" class="checkBox" @click="handleLayerClick(layer)"/>
+      <el-tooltip placement="right-start" :content="layer.content">
+        <label :for="layer.id" class="checkText">{{ layer.id }}</label>
+      </el-tooltip>
     </div>
-    <div class="layerItem">
+    <div class="layerItem" id="heatmap">
       <label :for="heatMap.id" class="checkText">{{ heatMap.id }}</label>
       <input type="checkbox" class="checkBox" @click="heatMap.on=!heatMap.on"/>
     </div>
   </div>
   <button class="btn" id="tableControl" @click="echartsManage=!echartsManage">Carbon Pool</button>
   <div id="echartsTable" ref="echartsTableContainer" v-show="echartsManage"></div>
-  <div class="heatMap" ref="heatMapContainer">
-    <canvas class="heatMap" ref="heatMapCanvas" style="width: 100%; height: 100%"></canvas>
-  </div>
-<!--  <olHeatMap></olHeatMap>-->
+  <el-image v-if="src" id="legend" :src fit="fill"></el-image>
 </template>
 
 <style scoped>
@@ -247,13 +238,49 @@ watch(echartsManage, () => {
   top: 50px;
 }
 
-.heatMap {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
 #layerManage {
   left: 10px;
+}
+
+.layerItem {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+.layerItem el-icon {
+  position: absolute;
+}
+
+.checkText {
+  position: relative;
+  left: 25px;
+  font-size: 20px;
+}
+
+.checkBox {
+  position: absolute;
+  left: 60px;
+}
+
+.checkBox:hover {
+  opacity: 0.7;
+}
+
+#heatmap label {
+  left: 66px;
+}
+
+h3 {
+  margin: 10px;
+}
+
+#legend {
+  z-index: 1;
+  position: absolute;
+  right: 30px;
+  bottom: 30px;
+  height: 200px;
+  width: 100px;
 }
 </style>

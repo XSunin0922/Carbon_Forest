@@ -18,8 +18,9 @@ function viewerSet() {
     scene3DOnly: true
   });
   viewer.value.scene.camera.setView({
-    destination: Cesium.Cartesian3.fromDegrees(114, 30, 10000000),
+    destination: Cesium.Cartesian3.fromDegrees(114, 30, 10000000)
   });
+  viewer.value._cesiumWidget._creditContainer.style.display = "none";
 }
 
 async function buildingSet() {
