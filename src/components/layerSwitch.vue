@@ -226,6 +226,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
+#tableControl {
+  top: 5px;
+  right: 60px;
+}
+
 #echartsTable {
   position: absolute;
   border: none;
@@ -239,6 +244,7 @@ onMounted(() => {
 }
 
 #layerManage {
+  top: 5px;
   left: 10px;
 }
 
@@ -282,5 +288,35 @@ h3 {
   bottom: 30px;
   height: 200px;
   width: 100px;
+}
+
+#layerControl {
+  position: absolute;
+  padding: 20px;
+  z-index: 1;
+  color: #1c0249;
+  background: linear-gradient(45deg, #1cd6ce, #002f5f);
+  background-size: 400% 400%;
+  border-radius: 10px;
+  width: 220px;
+  height: 400px;
+  left: 10px;
+  top: 50px;
+  font-size: 25px;
+  font-family: "Microsoft YaHei";
+  animation: glowing 4s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes glowing {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>

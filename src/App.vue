@@ -9,10 +9,6 @@ function navigateTo(path) {
 </script>
 
 <template>
-  <!--  <nav>-->
-  <!--    <router-link to="/">Home</router-link> |-->
-  <!--    <router-link to="/heatmap">HeatMap</router-link>-->
-  <!--  </nav>-->
   <nav>
     <el-link @click="navigateTo('/')" icon="ToiletPaper" :underline="false">Home</el-link> |
     <el-link @click="navigateTo('/Heatmap')" icon="PictureRounded" :underline="false">HeatMap</el-link>
@@ -41,11 +37,11 @@ nav {
   position: absolute;
   z-index: 1;
   text-align: center;
+  a {
+    color: #002f5f;
+    font-family: "Microsoft YaHei";
+    font-size: 20px;
+  }
 }
 
-nav a {
-  color: #002f5f;
-  font-family: "Microsoft YaHei";
-  font-size: 20px;
-}
 </style>

@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import {ref, onMounted} from "vue";
 import viewSwitch from "./viewSwitch.vue";
 import layerSwitch from "./layerSwitch.vue";
+import computed from "./computed.vue";
 
 let viewer = ref({});
 let tileSet;
@@ -43,6 +44,7 @@ onMounted(() => {
   <div id="mapContainer">
     <layerSwitch :viewer="viewer"></layerSwitch>
     <viewSwitch :viewer="viewer"></viewSwitch>
+    <computed></computed>
   </div>
 </template>
 
@@ -51,7 +53,5 @@ onMounted(() => {
   width: 100%;
   height: 898px;
   position: relative;
-  padding: 0;
-  margin: 0;
 }
 </style>
