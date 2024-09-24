@@ -1,6 +1,6 @@
 <script setup>
 import * as Cesium from 'cesium';
-import {ref, onMounted} from "vue";
+import {ref, onMounted, nextTick} from "vue";
 import viewSwitch from "./viewSwitch.vue";
 import layerSwitch from "./layerSwitch.vue";
 import computed from "./computed.vue";
@@ -33,10 +33,11 @@ async function buildingSet() {
   }
 }
 
-onMounted(() => {
+onMounted( async () => {
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5MDdmYTZmOS05ZDczLTQ5MDYtYWU0MS0xNzFlODRmYjk2MmYiLCJpZCI6MjI5MjQyLCJpYXQiOjE3MjE2MzYzNjd9.g5_le1_diA7_fGKCiYGLzJKgqI9_e3XqVGcPGGow-18';
   viewerSet();
-  buildingSet();
+  await nextTick();
+  await buildingSet();
 })
 </script>
 

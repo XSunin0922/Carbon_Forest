@@ -8,17 +8,17 @@ import {ElLoading} from "element-plus";
 
 const props = defineProps(['viewer']);
 const echartsTableContainer = ref(null);
-const src = ref('');
+const legend_src = ref('');
 const echartsManage = ref(false);
 const layerManage = ref(false);
 let WMTSLayers = ref([
-  {id: 'zsj_lulc_10', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '10年土地利用'},
-  {id: 'zsj_lulc_20', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年土地利用'},
-  {id: 'tot_c_cur', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年总碳库'},
-  {id: 'tot_c_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '30年总碳库（预测）'},
-  {id: 'delta_cur_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20-30年间碳库变化'},
-  {id: 'c_above_cur', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '20年地上碳库'},
-  {id: 'c_above_fut', obj: null, lay: null, on: false, alpha: 0.6, fcUp: null, fcDown: null, content: '30年地上碳库（预测）'},
+  {id: 'zsj_lulc_10', obj: null, lay: null, on: false, content: '10年土地利用'},
+  {id: 'zsj_lulc_20', obj: null, lay: null, on: false, content: '20年土地利用'},
+  {id: 'tot_c_cur', obj: null, lay: null, on: false, content: '20年总碳库'},
+  {id: 'tot_c_fut', obj: null, lay: null, on: false, content: '30年总碳库（预测）'},
+  {id: 'delta_cur_fut', obj: null, lay: null, on: false, content: '20-30年间碳库变化'},
+  {id: 'c_above_cur', obj: null, lay: null, on: false, content: '20年地上碳库'},
+  {id: 'c_above_fut', obj: null, lay: null, on: false, content: '30年地上碳库（预测）'},
 ]);
 let heatMap = ref({id: 'heatPoint', point: null, on: false});
 
@@ -40,14 +40,18 @@ function WMTSlayerSet(layer) {
       rectangle: new Cesium.Rectangle(Cesium.Math.toRadians(111.3), Cesium.Math.toRadians(21.5), Cesium.Math.toRadians(115.5), Cesium.Math.toRadians(24.4))
     });
     layer.lay = props.viewer.imageryLayers.addImageryProvider(layer.obj);
-    layer.lay.alpha = layer.alpha;
-    layer.fcUp = function () {
-      return UpDown('Up', layer.lay);
-    };
-    layer.fcDown = function () {
-      return UpDown('Down', layer.lay);
-    };
-    src.value = `/geoserver/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=carbon%3A${layer.id}`;
+    layer.lay.alpha = 0.6;
+    legend_src.value = `/geoserver/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=carbon%3A${layer.id}`;
+  }
+}
+
+function layerUpDown(type, lay) {
+  if (props.viewer && props.viewer.imageryLayers && lay) {
+    if (type === 'Up') {
+      props.viewer.imageryLayers.raise(lay);
+    } else if (type === 'Down') {
+      props.viewer.imageryLayers.lower(lay);
+    }
   }
 }
 
@@ -55,29 +59,7 @@ function WMTSLayerToggle(layer) {
   if (props.viewer && props.viewer.imageryLayers) {
     if (layer.on) {
       if (layer.obj === null) {
-        switch (layer.id) {
-          case 'zsj_lulc_10':
-            WMTSlayerSet(layer);
-            break;
-          case 'zsj_lulc_20':
-            WMTSlayerSet(layer);
-            break;
-          case 'tot_c_cur':
-            WMTSlayerSet(layer);
-            break;
-          case 'tot_c_fut':
-            WMTSlayerSet(layer);
-            break;
-          case 'delta_cur_fut':
-            WMTSlayerSet(layer);
-            break;
-          case 'c_above_cur':
-            WMTSlayerSet(layer);
-            break;
-          case 'c_above_fut':
-            WMTSlayerSet(layer);
-            break;
-        }
+        WMTSlayerSet(layer);
       }
     } else {
       if (layer.obj !== null) {
@@ -85,18 +67,8 @@ function WMTSLayerToggle(layer) {
         // debug
         layer.lay = null;
         layer.obj = null;
-        src.value = '';
+        legend_src.value = '';
       }
-    }
-  }
-}
-
-function UpDown(type, lay) {
-  if (props.viewer && props.viewer.imageryLayers && lay) {
-    if (type === 'Up') {
-      props.viewer.imageryLayers.raise(lay);
-    } else if (type === 'Down') {
-      props.viewer.imageryLayers.lower(lay);
     }
   }
 }
@@ -204,10 +176,10 @@ onMounted(() => {
   <div id="layerControl" v-show="layerManage">
     <h3>Layer Control</h3>
     <div class="layerItem" v-for="layer in WMTSLayers" :key="layer.id">
-      <el-icon size="20" @click="layer.fcDown">
+      <el-icon size="20" @click="layerUpDown('Down', layer.lay)">
         <SortDown/>
       </el-icon>
-      <el-icon size="20" @click="layer.fcUp">
+      <el-icon size="20" @click="layerUpDown('Up', layer.lay)">
         <SortUp/>
       </el-icon>
       <input type="checkbox" class="checkBox" @click="handleLayerClick(layer)"/>
@@ -222,7 +194,7 @@ onMounted(() => {
   </div>
   <button class="btn" id="tableControl" @click="echartsManage=!echartsManage">Carbon Pool</button>
   <div id="echartsTable" ref="echartsTableContainer" v-show="echartsManage"></div>
-  <el-image v-if="src" id="legend" :src fit="fill"></el-image>
+  <el-image v-if="legend_src" id="legend" :src="legend_src" fit="fill"></el-image>
 </template>
 
 <style scoped>
@@ -310,13 +282,13 @@ h3 {
 
 @keyframes glowing {
   0% {
-    background-position: 0% 50%;
+    background-position: 0 50%;
   }
   50% {
     background-position: 100% 50%;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 0 50%;
   }
 }
 </style>

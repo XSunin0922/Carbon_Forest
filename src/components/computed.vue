@@ -34,8 +34,8 @@ const handleCompute = (model_name) => {
 </script>
 
 <template>
-  <el-dropdown>
-    <button class="btn" id="computed">computed</button>
+  <el-dropdown id="computed_btn">
+    <button class="btn">computed</button>
     <template #dropdown>
       <el-dropdown-menu>
         <el-dropdown-item v-for="model in computedModel" @click="handleCompute(model.name)">{{ model.name }}
@@ -49,5 +49,10 @@ const handleCompute = (model_name) => {
 </template>
 
 <style scoped>
-
+#computed_btn {
+  width: 120px;
+  position: absolute;
+  top: 5px;
+  left: 140px;
+}
 </style>
