@@ -42,17 +42,14 @@ onMounted( async () => {
 </script>
 
 <template>
-  <div id="mapContainer">
-    <layerSwitch :viewer="viewer"></layerSwitch>
-    <viewSwitch :viewer="viewer"></viewSwitch>
-    <computed></computed>
-  </div>
+  <div id="mapContainer"></div>
+  <layerSwitch :viewer="viewer"></layerSwitch>
+  <viewSwitch :viewer="viewer"></viewSwitch>
+  <computed></computed>
 </template>
 
 <style scoped>
 #mapContainer {
-  width: 100%;
-  height: 898px;
-  position: relative;
+  height: 100%;
 }
 </style>

@@ -5,21 +5,19 @@ import {onMounted, ref, watch} from "vue";
 import option from "../utils/echarts_option.js";
 import {SortDown, SortUp} from "@element-plus/icons-vue";
 import {ElLoading} from "element-plus";
+import EventBus from "../utils/eventBus.js";
+import {useLayersStore} from "../stores/counter.js";
 
+const layersStore = useLayersStore();
+const { } = layersStore;
 const props = defineProps(['viewer']);
 const echartsTableContainer = ref(null);
 const legend_src = ref('');
 const echartsManage = ref(false);
 const layerManage = ref(false);
-let WMTSLayers = ref([
-  {id: 'zsj_lulc_10', obj: null, lay: null, on: false, content: '10年土地利用'},
-  {id: 'zsj_lulc_20', obj: null, lay: null, on: false, content: '20年土地利用'},
-  {id: 'tot_c_cur', obj: null, lay: null, on: false, content: '20年总碳库'},
-  {id: 'tot_c_fut', obj: null, lay: null, on: false, content: '30年总碳库（预测）'},
-  {id: 'delta_cur_fut', obj: null, lay: null, on: false, content: '20-30年间碳库变化'},
-  {id: 'c_above_cur', obj: null, lay: null, on: false, content: '20年地上碳库'},
-  {id: 'c_above_fut', obj: null, lay: null, on: false, content: '30年地上碳库（预测）'},
-]);
+const activeTab = ref('1');
+let WMTSLayers = ref();
+let computedLayers = ref();
 let heatMap = ref({id: 'heatPoint', point: null, on: false});
 
 async function tableInitial() {
@@ -146,6 +144,12 @@ function handleLayerClick(layer) {
   }
 }
 
+const getLayerList = () => {
+  return WMTSLayers.value.map(layer => {return layer.id});
+}
+
+EventBus.on('getLayerLists', getLayerList)
+
 watch(WMTSLayers, (newLayers) => {
   newLayers.forEach(layer => {
     WMTSLayerToggle(layer);
@@ -167,6 +171,7 @@ watch(() => heatMap.value.on, () => {
 
 onMounted(() => {
   tableInitial();
+  WMTSLayers.value = layersStore.getOriginLayers;
 })
 
 </script>
@@ -175,22 +180,29 @@ onMounted(() => {
   <button class="btn" id="layerManage" @click="layerManage=!layerManage">layerManage</button>
   <div id="layerControl" v-show="layerManage">
     <h3>Layer Control</h3>
-    <div class="layerItem" v-for="layer in WMTSLayers" :key="layer.id">
-      <el-icon size="20" @click="layerUpDown('Down', layer.lay)">
-        <SortDown/>
-      </el-icon>
-      <el-icon size="20" @click="layerUpDown('Up', layer.lay)">
-        <SortUp/>
-      </el-icon>
-      <input type="checkbox" class="checkBox" @click="handleLayerClick(layer)"/>
-      <el-tooltip placement="right-start" :content="layer.content">
-        <label :for="layer.id" class="checkText">{{ layer.id }}</label>
-      </el-tooltip>
-    </div>
-    <div class="layerItem" id="heatmap">
-      <label :for="heatMap.id" class="checkText">{{ heatMap.id }}</label>
-      <input type="checkbox" class="checkBox" @click="heatMap.on=!heatMap.on"/>
-    </div>
+    <el-tabs v-model="activeTab">
+      <el-tab-pane label="OriginLayers" name="1">
+        <div class="layerItem" v-for="layer in WMTSLayers" :key="layer.id">
+          <el-icon size="20" @click="layerUpDown('Down', layer.lay)">
+            <SortDown/>
+          </el-icon>
+          <el-icon size="20" @click="layerUpDown('Up', layer.lay)">
+            <SortUp/>
+          </el-icon>
+          <input type="checkbox" class="checkBox" @click="handleLayerClick(layer)"/>
+          <el-tooltip placement="right-start" :content="layer.describe" effect="light">
+            <label :for="layer.id" class="checkText">{{ layer.id }}</label>
+          </el-tooltip>
+        </div>
+        <div class="layerItem" id="heatmap">
+          <label :for="heatMap.id" class="checkText">{{ heatMap.id }}</label>
+          <input type="checkbox" class="checkBox" @click="heatMap.on=!heatMap.on"/>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="ComputedLayers" name="2">
+        <div class="layerItem" v-for="layer in computedLayers" :key="layer.id"></div>
+      </el-tab-pane>
+    </el-tabs>
   </div>
   <button class="btn" id="tableControl" @click="echartsManage=!echartsManage">Carbon Pool</button>
   <div id="echartsTable" ref="echartsTableContainer" v-show="echartsManage"></div>
@@ -200,7 +212,7 @@ onMounted(() => {
 <style scoped>
 #tableControl {
   top: 5px;
-  right: 60px;
+  right: 50px;
 }
 
 #echartsTable {
@@ -224,25 +236,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   height: 40px;
-}
 
-.layerItem el-icon {
-  position: absolute;
-}
+  .checkBox:hover {
+    opacity: 0.7;
+  }
 
-.checkText {
-  position: relative;
-  left: 25px;
-  font-size: 20px;
-}
-
-.checkBox {
-  position: absolute;
-  left: 60px;
-}
-
-.checkBox:hover {
-  opacity: 0.7;
+  .checkText {
+    position: relative;
+    left: 20px;
+    font-size: 20px;
+  }
 }
 
 #heatmap label {
@@ -257,12 +260,14 @@ h3 {
   z-index: 1;
   position: absolute;
   right: 30px;
-  bottom: 30px;
+  bottom: 70px;
   height: 200px;
   width: 100px;
 }
 
 #layerControl {
+  user-select: none;
+  overflow: auto;
   position: absolute;
   padding: 20px;
   z-index: 1;
@@ -270,7 +275,7 @@ h3 {
   background: linear-gradient(45deg, #1cd6ce, #002f5f);
   background-size: 400% 400%;
   border-radius: 10px;
-  width: 220px;
+  width: 300px;
   height: 400px;
   left: 10px;
   top: 50px;
@@ -278,6 +283,24 @@ h3 {
   font-family: "Microsoft YaHei";
   animation: glowing 4s linear infinite;
   opacity: 0.9;
+}
+
+#layerControl::-webkit-scrollbar {
+  width: 12px;
+}
+
+#layerControl::-webkit-scrollbar-track {
+  background: #1cd6ce; /* Background of the scrollbar track */
+  border-radius: 10px;
+}
+
+#layerControl::-webkit-scrollbar-thumb {
+  background: #002f5f; /* Color of the scrollbar thumb */
+  border-radius: 10px;
+}
+
+#layerControl::-webkit-scrollbar-thumb:hover {
+  background: #1c0249; /* Color of the scrollbar thumb on hover */
 }
 
 @keyframes glowing {

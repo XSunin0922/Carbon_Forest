@@ -47,20 +47,18 @@ function handleFly(cityName) {
 </script>
 
 <template>
-  <div class="ctrlBar" id="flyTo">
     <button class="btn" id="flyToZSJ" @click="handleFly('zsj')">flyToZSJ</button>
     <button class="btn" id="flyToCSJ" @click="flyToCSJ">flyToCSJ</button>
-  </div>
 </template>
 
 <style scoped>
 #flyToCSJ {
-  left: 140px;
-  bottom: 0;
+  right: 50px;
+  bottom: 5px;
 }
 
 #flyToZSJ {
-  left: 10px;
-  bottom: 0;
+  right: 180px;
+  bottom: 5px;
 }
 </style>

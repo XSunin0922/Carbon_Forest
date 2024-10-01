@@ -1,14 +1,21 @@
 import service from "./axios.js";
 
-const get = (url, params) => service.get(url, params);
-const post = (url, data) => service.post(url, data);
-const put = (url, data) => service.put(url, data);
-const del = (url) => service.delete(url);
-
-const checkParams = (params) => {
-
+export const publish = async (data) => {
+    return await service.post("/publish", data);
 }
 
-export const publishLayer = params => {
+export const simplify = async (data) => {
+    return await service.post("/simplify", data);
+}
 
+export const neighborRecognition = async (data) => {
+    return await service.post("/neighbor_recognition", data);
+}
+
+export const edgeEffectMeasure = async (data) => {
+    return await service.post("/edge_effect_measure", data);
+}
+
+export const getComputedLayers = async () => {
+    return await service.get("/computed_layers");
 }
