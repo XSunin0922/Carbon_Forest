@@ -22,7 +22,8 @@ export default defineConfig({
         port: 4000,
         proxy: {
             '/geoserver': {
-                target: 'http://localhost:8080',
+                // 热点地址
+                target: 'http://192.168.233.86:8080',
                 changeOrigin: true,
             }
         },
