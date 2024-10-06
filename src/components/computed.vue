@@ -2,7 +2,8 @@
 import {ref} from 'vue'
 import * as Model from '../utils/model.js'
 import EventBus from "../utils/eventBus.js";
-import {useLayersStore} from "../stores/counter.js";
+import { useLayersStore } from "../stores/counter.js";
+import { ElMessage } from 'element-plus';
 
 const {publish, simplify, neighborRecognition, edgeEffectMeasure} = Model
 const layersStore = useLayersStore();
@@ -19,13 +20,14 @@ const dialogOn = ref(false);
 const computedOption = ref({
   input_raster: '',
   output_raster: '',
+  output_feature: '',
   output_table: '',
   resample_cell_size: '',
   filter_cell_size: '',
   forest_index: '',
   distance_class: '',
   edge_distance: '',
-  simplify_raster: '',
+  simplified_raster: '',
   carbon_raster: '',
   neighbor_extent: '',
 });
@@ -77,10 +79,26 @@ const handleSubmit = () => {
       geoserverParams.style = 'lulc_image';
       break;
     case 'neighborRecognition':
-
+      params.simplified_raster = computedOption.value.simplified_raster + '.tif';
+      params.output_feature = computedOption.value.output_feature;
+      params.forest_index = Number(computedOption.value.forest_index);
+      if (params.output_feature.split('.')[1] !== 'shp') {
+        alert('output_feature must be a shp file');
+        return;
+      }
+      geoserverParamsSet(params.output_feature);
+      geoserverParams.style = 'extent';
       break;
     case 'edgeEffectMeasure':
-
+      params.carbon_raster = computedOption.value.carbon_raster + '.tif';
+      params.neighbor_extent = computedOption.value.neighbor_extent + '.shp';
+      params.output_table = computedOption.value.output_table;
+      params.distance_class = Number(computedOption.value.distance_class);
+      params.edge_distance = Number(computedOption.value.edge_distance);
+      if (params.output_table.split('.')[1] !== 'csv') {
+        alert('output_table must be a csv file');
+        return;
+      }
       break;
     case 'geoDetector':
       break;
@@ -89,6 +107,10 @@ const handleSubmit = () => {
 }
 
 const handleCompute = async () => {
+  ElMessage({
+    message: 'Submit success',
+    type: 'success'
+  });
   switch (currentModel.value) {
     case 'InVESTCarbonModel':
       break;
@@ -164,7 +186,7 @@ const handleCompute = async () => {
       </el-tooltip>
       <el-tooltip placement="right" effect="light">
         <template #content>Convolution kernel<br />Recommended value: 11</template>
-        <el-form-item label="filter_cell_size" style="padding-bottom: 20px">
+        <el-form-item label="filter_cell_size" style="padding-bottom: 20px" @click="handleSubmit">
           <el-input v-model="computedOption.filter_cell_size" type="number"></el-input>
         </el-form-item>
       </el-tooltip>
@@ -176,17 +198,20 @@ const handleCompute = async () => {
     </template>
 
     <template v-if="currentModel === 'neighborRecognition'">
-      <el-form-item label="simplify_raster" style="padding-top: 20px">
-        <el-select v-model="computedOption.simplify_raster" placeholder="Select Raster">
+      <el-form-item label="simplified_raster" style="padding-top: 20px">
+        <el-select v-model="computedOption.simplified_raster" placeholder="Select Raster">
           <el-option v-for="layerId in getComputedLayersList" :label="layerId" :value="layerId"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="output_raster">
-        <el-input v-model="computedOption.output_raster"></el-input>
+      <el-form-item label="output_feature">
+        <el-input v-model="computedOption.output_feature"></el-input>
       </el-form-item>
-      <el-form-item label="forest_index">
-        <el-input v-model="computedOption.forest_index" type="number"></el-input>
-      </el-form-item>
+      <el-tooltip placement="right" effect="light">
+        <template #content>Forest land use code<br />Default value: 2</template>
+        <el-form-item label="forest_index">
+          <el-input v-model="computedOption.forest_index" type="number"></el-input>
+        </el-form-item>
+      </el-tooltip>
       <div style="display: inline-flex; justify-content: center; width: 100%; padding-bottom: 20px">
         <el-button type="info" @click="toggleParamsSetForm(currentModel)" style="width: 80px;" color="#11659a">Cancel
         </el-button>
@@ -195,13 +220,13 @@ const handleCompute = async () => {
     </template>
 
     <template v-if="currentModel === 'edgeEffectMeasure'">
-      <el-form-item label="input_raster" style="padding-top: 20px">
-        <el-select v-model="computedOption.carbon_raster" placeholder="Select raster">
+      <el-form-item label="carbon_raster" style="padding-top: 20px">
+        <el-select v-model="computedOption.carbon_raster" placeholder="Select Raster">
           <el-option v-for="layerId in getOriginLayersList" :label="layerId" :value="layerId"></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="simplify_raster" style="padding-top: 20px">
-        <el-select v-model="computedOption.neighbor_extent" placeholder="Select Raster">
+      <el-form-item label="neighbor_extent" style="padding-top: 20px">
+        <el-select v-model="computedOption.neighbor_extent" placeholder="Select Feature">
           <el-option v-for="layerId in getComputedLayersList" :label="layerId" :value="layerId"></el-option>
         </el-select>
       </el-form-item>
