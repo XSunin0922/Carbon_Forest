@@ -23,7 +23,7 @@ export default defineConfig({
         proxy: {
             '/geoserver': {
                 // 热点地址
-                target: 'http://192.168.233.86:8080',
+                target: 'http://127.0.0.1:8080',
                 changeOrigin: true,
             }
         },

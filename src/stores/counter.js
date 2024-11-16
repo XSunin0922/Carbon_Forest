@@ -39,6 +39,7 @@ export const useLayersStore = defineStore('counter', {
             });
         },
         getComputedLayersList(state) {
+            // debug
             if (state.computedLayers) {
                 return state.computedLayers
             }

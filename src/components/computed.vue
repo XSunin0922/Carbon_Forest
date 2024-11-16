@@ -1,11 +1,10 @@
 <script setup>
 import {ref} from 'vue'
-import * as Model from '../utils/model.js'
+import {publish, simplify, neighborRecognition, edgeEffectMeasure} from '../utils/model.js'
 import EventBus from "../utils/eventBus.js";
 import { useLayersStore } from "../stores/counter.js";
 import { ElMessage } from 'element-plus';
 
-const {publish, simplify, neighborRecognition, edgeEffectMeasure} = Model
 const layersStore = useLayersStore();
 const {getOriginLayersList, getComputedLayersList, getComputedLayers} = layersStore;
 const computedModel = ref([
@@ -33,6 +32,7 @@ const computedOption = ref({
 });
 const currentModel = ref('');
 
+// 切换模型选项事件
 const toggleParamsSetForm = async (model_name) => {
   formOn.value = !formOn.value;
   if (model_name !== currentModel.value) {
@@ -45,6 +45,7 @@ const toggleParamsSetForm = async (model_name) => {
   }
 }
 
+// 设置发布地图参数
 function geoserverParamsSet(data) {
   geoserverParams.data_path = data
   geoserverParams.store_name = data.split('.')[0]
@@ -60,6 +61,7 @@ function geoserverParamsSet(data) {
 
 let params;
 let geoserverParams;
+// 提交参数
 const handleSubmit = () => {
   params = {};
   geoserverParams = {};
@@ -71,10 +73,7 @@ const handleSubmit = () => {
       params.output_raster = computedOption.value.output_raster;
       params.resample_cell_size = Number(computedOption.value.resample_cell_size);
       params.filter_cell_size = Number(computedOption.value.filter_cell_size);
-      if (params.output_raster.split('.')[1] !== 'tif') {
-        alert('output_raster must be a tif file');
-        return;
-      }
+      if (!warningMsg()) return;
       geoserverParamsSet(params.output_raster);
       geoserverParams.style = 'lulc_image';
       break;
@@ -82,10 +81,7 @@ const handleSubmit = () => {
       params.simplified_raster = computedOption.value.simplified_raster + '.tif';
       params.output_feature = computedOption.value.output_feature;
       params.forest_index = Number(computedOption.value.forest_index);
-      if (params.output_feature.split('.')[1] !== 'shp') {
-        alert('output_feature must be a shp file');
-        return;
-      }
+      if (!warningMsg()) return;
       geoserverParamsSet(params.output_feature);
       geoserverParams.style = 'extent';
       break;
@@ -95,17 +91,39 @@ const handleSubmit = () => {
       params.output_table = computedOption.value.output_table;
       params.distance_class = Number(computedOption.value.distance_class);
       params.edge_distance = Number(computedOption.value.edge_distance);
-      if (params.output_table.split('.')[1] !== 'csv') {
-        alert('output_table must be a csv file');
-        return;
-      }
+      if (!warningMsg()) return;
       break;
     case 'geoDetector':
       break;
   }
   dialogOn.value = true;
 }
-
+// 提交参数时的提示
+const warningMsg = () => {
+  if (currentModel.value === 'simplifyRaster' && params.output_raster.split('.')[1] !== 'tif') {
+    ElMessage({
+      message: 'output_raster must be a tif file',
+      type: 'warning'
+    });
+    return false;
+  }
+  if (currentModel.value === 'neighborRecognition' && params.output_feature.split('.')[1] !== 'shp') {
+    ElMessage({
+      message: 'output_raster must be a shp file',
+      type: 'warning'
+    });
+    return false;
+  }
+  if (currentModel.value === 'edgeEffectMeasure' && params.output_table.split('.')[1] !== 'csv') {
+    ElMessage({
+      message: 'output_raster must be a csv file',
+      type: 'warning'
+    });
+    return false;
+  }
+  return true;
+}
+// 运行模型接口
 const handleCompute = async () => {
   ElMessage({
     message: 'Submit success',
@@ -145,9 +163,8 @@ const handleCompute = async () => {
       </el-dropdown-menu>
     </template>
   </el-dropdown>
-  <el-form v-if="formOn" v-model="computedOption" label-width="auto" style="max-width: 400px" class="params_set_form">
+  <el-form v-if="formOn" v-model="computedOption" label-width="auto" style="width: 400px" class="params_set_form">
     <h3>{{ currentModel }}</h3>
-
     <template v-if="currentModel === 'InVESTCarbonModel'">
       <el-form-item label="input_raster" style="padding-top: 20px">
         <el-select v-model="computedOption.input_raster" placeholder="Select raster">
@@ -186,8 +203,8 @@ const handleCompute = async () => {
       </el-tooltip>
       <el-tooltip placement="right" effect="light">
         <template #content>Convolution kernel<br />Recommended value: 11</template>
-        <el-form-item label="filter_cell_size" style="padding-bottom: 20px" @click="handleSubmit">
-          <el-input v-model="computedOption.filter_cell_size" type="number"></el-input>
+        <el-form-item label="filter_cell_size" style="padding-bottom: 20px" >
+          <el-input v-model="computedOption.filter_cell_size" type="number" @keydown.enter.exact="handleSubmit"></el-input>
         </el-form-item>
       </el-tooltip>
       <div style="display: inline-flex; justify-content: center; width: 100%; padding-bottom: 20px">
@@ -209,7 +226,7 @@ const handleCompute = async () => {
       <el-tooltip placement="right" effect="light">
         <template #content>Forest land use code<br />Default value: 2</template>
         <el-form-item label="forest_index">
-          <el-input v-model="computedOption.forest_index" type="number"></el-input>
+          <el-input v-model="computedOption.forest_index" type="number" @keydown.enter.exact="handleSubmit"></el-input>
         </el-form-item>
       </el-tooltip>
       <div style="display: inline-flex; justify-content: center; width: 100%; padding-bottom: 20px">
@@ -237,7 +254,7 @@ const handleCompute = async () => {
         <el-input v-model="computedOption.distance_class" type="number"></el-input>
       </el-form-item>
       <el-form-item label="edge_distance" style="padding-bottom: 20px">
-        <el-input v-model="computedOption.edge_distance" type="number"></el-input>
+        <el-input v-model="computedOption.edge_distance" type="number" @keydown.enter.exact="handleSubmit"></el-input>
       </el-form-item>
       <div style="display: inline-flex; justify-content: center; width: 100%; padding-bottom: 20px">
         <el-button type="info" @click="toggleParamsSetForm(currentModel)" style="width: 80px;" color="#11659a">Cancel</el-button>
