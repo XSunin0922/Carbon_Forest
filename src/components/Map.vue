@@ -4,9 +4,15 @@ import {ref, onMounted, nextTick} from "vue";
 import viewSwitch from "./viewSwitch.vue";
 import layerSwitch from "./layerSwitch.vue";
 import computed from "./computed.vue";
+import getCesiumHeat from 'cesiumjs-heat';
+import {useResStore} from "../stores/res.js";
+import EventBus from "../utils/eventBus.js";
 
 let viewer = ref({});
 let tileSet;
+let heatMapInstance = ref(null);
+const CesiumHeat = getCesiumHeat(Cesium);
+const resStore = useResStore();
 
 function viewerSet() {
   viewer.value = new Cesium.Viewer('mapContainer', {
@@ -32,6 +38,33 @@ async function buildingSet() {
     console.error(error);
   }
 }
+
+// 删除热图
+function removeHeatMap() {
+  if (heatMapInstance.value) {
+    heatMapInstance.value.remove();
+    heatMapInstance.value = null;
+  }
+}
+
+// 生成热图
+function generateHeatMap() {
+  removeHeatMap(); // 先删除上一次的热图
+  heatMapInstance.value = new CesiumHeat(
+      viewer.value,
+      resStore.heatMapPoints,
+      [111.356664, 21.461091, 115.421560, 24.392207],
+      {
+        radius: 10,
+        maxOpacity: 0.5,
+        minOpacity: 0,
+        blur: 0.8
+      }
+  );
+}
+
+// 加载热力图
+EventBus.on('edgeEffectMeasured', generateHeatMap);
 
 onMounted( async () => {
   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5MDdmYTZmOS05ZDczLTQ5MDYtYWU0MS0xNzFlODRmYjk2MmYiLCJpZCI6MjI5MjQyLCJpYXQiOjE3MjE2MzYzNjd9.g5_le1_diA7_fGKCiYGLzJKgqI9_e3XqVGcPGGow-18';

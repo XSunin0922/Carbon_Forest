@@ -1,6 +1,151 @@
 import * as echarts from "echarts";
 
-const option = {
+export const colorList = ['#80FFA5', '#00DDFF', '#37A2FF', '#FF0087', '#FFBF00']
+export const seriesList = [
+    {
+        // 曲线名称
+        name: '',
+        type: 'line',
+        // stack: 'Total',
+        smooth: true,
+        lineStyle: {
+            width: 0
+        },
+        showSymbol: false,
+        areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                    offset: 0,
+                    color: 'rgb(128, 255, 165)'
+                },
+                {
+                    offset: 1,
+                    color: 'rgb(1, 191, 236)'
+                }
+            ])
+        },
+        emphasis: {
+            focus: 'series'
+        },
+        // 因变量
+        data: []
+    },
+    {
+        name: '',
+        type: 'line',
+        // stack: 'Total',
+        smooth: true,
+        lineStyle: {
+            width: 0
+        },
+        showSymbol: false,
+        areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                    offset: 0,
+                    color: 'rgb(0, 221, 255)'
+                },
+                {
+                    offset: 1,
+                    color: 'rgb(77, 119, 255)'
+                }
+            ])
+        },
+        emphasis: {
+            focus: 'series'
+        },
+        data: []
+    },
+    {
+        name: '',
+        type: 'line',
+        // stack: 'Total',
+        smooth: true,
+        lineStyle: {
+            width: 0
+        },
+        showSymbol: false,
+        areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                    offset: 0,
+                    color: 'rgb(55, 162, 255)'
+                },
+                {
+                    offset: 1,
+                    color: 'rgb(116, 21, 219)'
+                }
+            ])
+        },
+        emphasis: {
+            focus: 'series'
+        },
+        data: []
+    },
+    {
+        name: '',
+        type: 'line',
+        // stack: 'Total',
+        smooth: true,
+        lineStyle: {
+            width: 0
+        },
+        showSymbol: false,
+        areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                    offset: 0,
+                    color: 'rgb(255, 0, 135)'
+                },
+                {
+                    offset: 1,
+                    color: 'rgb(135, 0, 157)'
+                }
+            ])
+        },
+        emphasis: {
+            focus: 'series'
+        },
+        data: []
+    },
+    {
+        name: '',
+        type: 'line',
+        // stack: 'Total',
+        smooth: true,
+        lineStyle: {
+            width: 0
+        },
+        showSymbol: false,
+        label: {
+            show: true,
+            position: 'top'
+        },
+        areaStyle: {
+            opacity: 0.8,
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                {
+                    offset: 0,
+                    color: 'rgb(255, 191, 0)'
+                },
+                {
+                    offset: 1,
+                    color: 'rgb(224, 62, 76)'
+                }
+            ])
+        },
+        emphasis: {
+            focus: 'series'
+        },
+        data: []
+    }
+]
+
+export const option = {
     color: ['#80FFA5', '#00DDFF', '#37A2FF', '#FF0087'],
     title: {
         text: 'Carbon Pool'
@@ -20,7 +165,7 @@ const option = {
     },
     toolbox: {
         feature: {
-            // saveAsImage: {}
+            saveAsImage: {}
         }
     },
     grid: {
@@ -152,4 +297,49 @@ const option = {
         },
     ]
 };
-export default option
+
+export const reOption = {
+    // 色块集
+    color: [],
+    title: {
+        text: 'result table'
+    },
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'cross',
+            label: {
+                backgroundColor: '#6a7985'
+            }
+        }
+    },
+    legend: {
+        // 曲线名称
+        data: []
+    },
+    toolbox: {
+        feature: {
+            saveAsImage: {}
+        }
+    },
+    grid: {
+        left: '0%',
+        right: '0%',
+        bottom: '0%',
+        containLabel: true
+    },
+    xAxis: [
+        {
+            type: 'category',
+            boundaryGap: false,
+            // 自变量
+            data: []
+        }
+    ],
+    yAxis: [
+        {
+            type: 'value'
+        }
+    ],
+    series: []
+};

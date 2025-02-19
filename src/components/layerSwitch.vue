@@ -1,26 +1,33 @@
 <script setup>
 import * as Cesium from 'cesium';
 import * as echarts from 'echarts';
-import {onMounted, ref, watch} from "vue";
-import option from "../utils/echarts_option.js";
+import {onMounted, ref, watch, nextTick} from "vue";
+import {option, reOption, colorList, seriesList} from "../utils/echarts_option.js";
 import {SortDown, SortUp} from "@element-plus/icons-vue";
 import {ElLoading} from "element-plus";
 import EventBus from "../utils/eventBus.js";
 import {useLayersStore} from "../stores/counter.js";
+import {useResStore} from "../stores/res.js";
 
 const layersStore = useLayersStore();
-const { } = layersStore;
+const resStore = useResStore();
+const {getGeoServerLayers} = layersStore;
 const props = defineProps(['viewer']);
-const echartsTableContainer = ref(null);
 const legend_src = ref('');
+const echartsTableContainer = ref(null);
+const reTableEchartsContainer = ref(null);
 const echartsManage = ref(false);
+const reTableEchartsManage = ref(false);
+const geoDetectorManage = ref(false);
+const edgeEffectMeasured = ref(false);
+const geoDetected = ref(false);
 const layerManage = ref(false);
 const activeTab = ref('1');
 let WMTSLayers = ref();
 let computedLayers = ref();
 let heatMap = ref({id: 'heatPoint', point: null, on: false});
 
-async function tableInitial() {
+function tableInitial() {
   const myChart = echarts.init(echartsTableContainer.value);
   option && myChart.setOption(option);
 }
@@ -43,6 +50,22 @@ function WMTSlayerSet(layer) {
   }
 }
 
+function WFSlayerSet(workspace, layer) {
+  if (props.viewer.dataSources) {
+    Cesium.GeoJsonDataSource.load(`/geoserver/${workspace}/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${workspace}%3A${layer.id}&maxFeatures=50&outputFormat=application%2Fjson`, {
+      stroke: Cesium.Color.BLACK,
+      fill: Cesium.Color.SEASHELL.withAlpha(0.4),
+      describe: function (properties) {
+        return 'id: ' + properties['id'] + '<br/>' +
+            'gridcode: ' + properties['gridcode'] + '<br/>'
+      }
+    }).then(dataSource => {
+      props.viewer.dataSources.add(dataSource);
+    }).catch(error => console.error(error))
+  }
+}
+
+// 图层置顶置底
 function layerUpDown(type, lay) {
   if (props.viewer && props.viewer.imageryLayers && lay) {
     if (type === 'Up') {
@@ -53,6 +76,7 @@ function layerUpDown(type, lay) {
   }
 }
 
+// 开关图层
 function WMTSLayerToggle(layer) {
   if (props.viewer && props.viewer.imageryLayers) {
     if (layer.on) {
@@ -70,7 +94,25 @@ function WMTSLayerToggle(layer) {
     }
   }
 }
+function WFSLayerToggle(layer) {
+  if (props.viewer && props.viewer.imageryLayers) {
+    if (layer.on) {
+      if (layer.obj === null) {
+        WFSlayerSet('computed' ,layer);
+      }
+    } else {
+      if (layer.obj !== null) {
+        props.viewer.imageryLayers.remove(layer.lay, true);
+        // debug
+        layer.lay = null;
+        layer.obj = null;
+        legend_src.value = '';
+      }
+    }
+  }
+}
 
+// 高度对应颜色
 function getColorForHeight(height) {
   if (height < 6000) {
     return Cesium.Color.fromBytes(227, 233, 215, 100)
@@ -131,6 +173,7 @@ function heatMapSet(heatMap) {
   }
 }
 
+// 点击加载图层
 function handleLayerClick(layer) {
   layer.on = !layer.on;
   if (layer.on) {
@@ -144,15 +187,48 @@ function handleLayerClick(layer) {
   }
 }
 
-const getLayerList = () => {
-  return WMTSLayers.value.map(layer => {return layer.id});
+// 配置结果图表参数
+const setReOption = async () => {
+  edgeEffectMeasured.value = true;
+  await nextTick();
+  reOption.color = colorList.slice(0, resStore.getLineList('gatherTable').length);
+  reOption.legend.data = resStore.getLineList('gatherTable');
+  reOption.xAxis[0].data = resStore.getDistanceList('gatherTable');
+  // reOption.yAxis[0]['min'] = Math.min(...resStore.getValuesList('gatherTable').flat()) - 500;
+  // reOption.yAxis[0]['max'] = Math.max(...resStore.getValuesList('gatherTable').flat()) + 500;
+  reOption.yAxis[0]['min'] = 3200;
+  reOption.yAxis[0]['max'] = 4000;
+  let series = seriesList.slice(0, resStore.getLineList('gatherTable').length);
+  series.forEach((seriesItem, index) => {
+    seriesItem.name = resStore.getLineList('gatherTable')[index];
+    seriesItem.data = resStore.getValuesList('gatherTable')[index];
+  });
+  reOption.series = series;
+
+  if (reTableEchartsContainer.value) {
+    const myChart = echarts.init(reTableEchartsContainer.value);
+    reOption && myChart.setOption(reOption);
+  } else {
+    console.error('reTableEchartsContainer is not available');
+  }
 }
+// 表格显示NaN值
+const formatNaNValue = (row, column, cellValue) => cellValue === null ? 'NaN' : cellValue;
 
-EventBus.on('getLayerLists', getLayerList)
-
+EventBus.on('geoDetectorComputed', () => {
+  geoDetected.value = true;
+});
+// 绘制结果图表
+EventBus.on('edgeEffectMeasured', setReOption)
+// 发布图层的开关监听
 watch(WMTSLayers, (newLayers) => {
   newLayers.forEach(layer => {
     WMTSLayerToggle(layer);
+  });
+}, {deep: true, flush: 'post'});
+watch(computedLayers, (newLayers) => {
+  newLayers.forEach(layer => {
+    WFSLayerToggle(layer);
   });
 }, {deep: true, flush: 'post'});
 
@@ -171,7 +247,10 @@ watch(() => heatMap.value.on, () => {
 
 onMounted(() => {
   tableInitial();
-  WMTSLayers.value = layersStore.getOriginLayers;
+  WMTSLayers.value = layersStore.getPublishedLayers;
+  getGeoServerLayers().then(() => {
+    computedLayers.value = layersStore.getPublishedComputedLayers;
+  });
 })
 
 </script>
@@ -181,7 +260,7 @@ onMounted(() => {
   <div id="layerControl" v-show="layerManage">
     <h3>Layer Control</h3>
     <el-tabs v-model="activeTab">
-      <el-tab-pane label="OriginLayers" name="1">
+      <el-tab-pane label="PublishedLayers" name="1">
         <div class="layerItem" v-for="layer in WMTSLayers" :key="layer.id">
           <el-icon size="20" @click="layerUpDown('Down', layer.lay)">
             <SortDown/>
@@ -200,31 +279,89 @@ onMounted(() => {
         </div>
       </el-tab-pane>
       <el-tab-pane label="ComputedLayers" name="2">
-        <div class="layerItem" v-for="layer in computedLayers" :key="layer.id"></div>
+        <div class="layerItem" v-for="layer in computedLayers" :key="layer.id">
+          <input type="checkbox" class="checkBox" @click="handleLayerClick(layer)"/>
+          <label :for="layer" class="checkText">{{ layer.id }}</label>
+        </div>
       </el-tab-pane>
     </el-tabs>
   </div>
-  <button class="btn" id="tableControl" @click="echartsManage=!echartsManage">Carbon Pool</button>
-  <div id="echartsTable" ref="echartsTableContainer" v-show="echartsManage"></div>
+  <button class="btn" style="top: 5px; right: 50px" @click="echartsManage=!echartsManage">Carbon Pool</button>
+  <button class="btn" style="top: 5px; right: 180px" @click="reTableEchartsManage=!reTableEchartsManage">reTable</button>
+  <button class="btn" style="top: 5px; right: 310px" @click="geoDetectorManage=!geoDetectorManage">reDetector</button>
+  <div class="echartsTable" style="width: 600px; height: 400px; right: 20px; top: 50px;" ref="echartsTableContainer" v-show="echartsManage"></div>
+  <div class="echartsTable" style="width: 600px; height: 400px; right: 20px; top: 470px;" ref="reTableEchartsContainer" v-show="reTableEchartsManage">
+    <template v-if="!edgeEffectMeasured">
+      <h3 style="color: #666666">Please run the edgeEffectMeasure model first</h3>
+    </template>
+  </div>
+  <div class="echartsTable" id="detected_table" style="width: 600px; height: 620px; right: 640px; top: 50px;" v-show="geoDetectorManage">
+    <template v-if="!geoDetected">
+      <h3 style="color: #666666">Please open the geoDetector first</h3>
+    </template>
+    <template v-else>
+      <h3 style="color: #999999">Factor Detector</h3>
+      <el-table :data="resStore.getTableData('factor_result')" border stripe style="width: 90%">
+        <el-table-column prop="name" label="" width="170" />
+        <el-table-column
+            v-for="(column, index) in resStore.getMatrixColumn('factor_result')"
+            :key="index"
+            :prop="column"
+            :label="column"
+        />
+      </el-table>
+      <h3 style="color: #999999">Interaction Detector</h3>
+      <el-table :data="resStore.getMatrixTableData('interaction_result')" style="width: 90%">
+        <el-table-column prop="name" label="" width="170" />
+        <el-table-column
+            v-for="(column, index) in resStore.getMatrixColumn('interaction_result')"
+            :key="index"
+            :prop="column"
+            :label="column"
+            :formatter="formatNaNValue"
+        />
+      </el-table>
+      <h3 style="color: #999999">Ecological Detector</h3>
+      <el-table :data="resStore.getMatrixTableData('ecological_result')" style="width: 90%">
+        <el-table-column prop="name" label="" width="170" />
+        <el-table-column
+            v-for="(column, index) in resStore.getMatrixColumn('ecological_result')"
+            :key="index"
+            :prop="column"
+            :label="column"
+            :formatter="formatNaNValue"
+        />
+      </el-table>
+      <h3 style="color: #999999">Risk Detector</h3>
+      <el-table :data="resStore.getTableData('risk_result')" style="width: 90%">
+        <el-table-column prop="name" label="" width="170" />
+        <el-table-column
+            v-for="(column, index) in resStore.getMatrixColumn('risk_result')"
+            :key="index"
+            :prop="column"
+            :label="column"
+        />
+      </el-table>
+    </template>
+  </div>
   <el-image v-if="legend_src" id="legend" :src="legend_src" fit="fill"></el-image>
 </template>
 
 <style scoped>
-#tableControl {
-  top: 5px;
-  right: 50px;
+#detected_table {
+  flex-direction: column;
+  background-color: rgba(42, 39, 51, 0.8);
 }
 
-#echartsTable {
+.echartsTable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
   border: none;
   border-radius: 20px;
   z-index: 1;
   background-color: rgba(255, 255, 255, 0.6);
-  width: 600px;
-  height: 400px;
-  right: 10px;
-  top: 50px;
 }
 
 #layerManage {
